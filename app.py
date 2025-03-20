@@ -3,13 +3,18 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import google.generativeai as genai
+
+# Load Gemini API Key from secrets
+API_KEY = st.secrets["api_keys"]["gemini"]
+genai.configure(api_key=API_KEY)
 
 # Page Title
 st.set_page_config(page_title="Streamlit CSV Visualizer", layout="wide")
 
 # Sidebar Navigation
 st.sidebar.header("Navigation")
-option = st.sidebar.radio("Go to:", ["Home", "About", "Upload Data", "Visualization"])
+option = st.sidebar.radio("Go to:", ["Home", "About", "Generate Data", "Upload Data", "Visualization"])
 
 # Global Variable for Uploaded Data
 if "data" not in st.session_state:
@@ -109,3 +114,45 @@ elif option == "Visualization":
             
             # Display the plot
             st.pyplot(fig)
+            
+# Generate Data Page (Using Gemini API)
+elif option == "Generate Data":
+    st.title("Generate Synthetic Data with Gemini AI")
+    
+    # Input Prompt
+    prompt = st.text_area("Enter a prompt to generate structured data:", 
+                          "Generate a dataset of 50 employees with Name, Age, Salary, Department")
+
+    if st.button("Generate Data"):
+        with st.spinner("Generating data..."):
+            try:
+                # Call Gemini API
+                model = genai.GenerativeModel("gemini-2.0-flash")
+                response = model.generate_content(prompt)
+                generated_text = response.text
+
+                # Try converting text output into a structured format
+                try:
+                    # Parse the response as CSV format
+                    from io import StringIO
+                    
+                    csv_data = StringIO(generated_text)
+                    df = pd.read_csv(csv_data)
+                    
+                    st.session_state.data = df  # Store in session state
+                    
+                    # Display Data
+                    st.success("Data generated successfully!")
+                    st.write("### Generated Data Preview")
+                    st.dataframe(df.head())
+
+                    # Allow Download
+                    csv = df.to_csv(index=False).encode('utf-8')
+                    st.download_button("Download CSV", csv, "generated_data.csv", "text/csv")
+                
+                except Exception as e:
+                    st.error("Failed to parse generated data into a structured format.")
+                    st.text_area("Raw Response from AI:", generated_text, height=300)
+
+            except Exception as e:
+                st.error(f"Error generating data: {e}")
