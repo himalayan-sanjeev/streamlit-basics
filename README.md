@@ -1,4 +1,4 @@
-# Streamlit CSV Visualizer & Data Generator
+# [Streamlit CSV Visualizer & Data Generator](https://himalayan-getting-started.streamlit.app/)
 
 An interactive **Streamlit** web app that allows users to:
 - **Upload CSV files** and preview their data 
