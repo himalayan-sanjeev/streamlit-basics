@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import google.generativeai as genai
+from io import StringIO
 
 # Load Gemini API Key from secrets
 API_KEY = st.secrets["api_keys"]["gemini"]
@@ -129,13 +130,16 @@ elif option == "Generate Data":
                 # Call Gemini API
                 model = genai.GenerativeModel("gemini-2.0-flash")
                 response = model.generate_content(prompt)
-                generated_text = response.text
+                generated_text = response.text.strip()
+                
+                # Ensure it doesn't contain unexpected markdown formatting
+                if "```csv" in generated_text:
+                    generated_text = generated_text.replace("```csv", "").replace("```", "").strip()
+
 
                 # Try converting text output into a structured format
                 try:
-                    # Parse the response as CSV format
-                    from io import StringIO
-                    
+                    # Parse the response as CSV format                    
                     csv_data = StringIO(generated_text)
                     df = pd.read_csv(csv_data)
                     
